@@ -25,3 +25,103 @@
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
   "exclude": ["node_modules"]
 }
+
+
+package main
+
+import (
+	"container/list"
+	"fmt"
+)
+
+// State represents a state in the problem (missionaries, cannibals, boat position)
+type State struct {
+	Missionaries int
+	Cannibals    int
+	Boat         int
+}
+
+// isValid checks if the given state is valid
+func isValid(s State, totalM, totalC int) bool {
+	// Check if numbers are within valid limits
+	if s.Missionaries < 0 || s.Missionaries > totalM || s.Cannibals < 0 || s.Cannibals > totalC {
+		return false
+	}
+	// Ensure missionaries are never outnumbered by cannibals on either bank
+	if (s.Missionaries > 0 && s.Missionaries < s.Cannibals) ||
+		(totalM-s.Missionaries > 0 && (totalM-s.Missionaries) < (totalC-s.Cannibals)) {
+		return false
+	}
+	return true
+}
+
+// bfsMissionariesAndCannibals solves the problem using BFS
+func bfsMissionariesAndCannibals(totalM, totalC int) {
+	initial := State{totalM, totalC, 1} // Start with all missionaries and cannibals on the starting side
+	goal := State{0, 0, 0}              // Goal: All moved to the other side
+
+	queue := list.New()
+	visited := make(map[State]bool)
+	parent := make(map[State]State)
+
+	queue.PushBack(initial)
+	visited[initial] = true
+	parent[initial] = State{-1, -1, -1} // Root state
+
+	// Possible boat moves
+	moves := []State{
+		{2, 0, 0}, {0, 2, 0}, {1, 1, 0}, {1, 0, 0}, {0, 1, 0}, // Moving from left to right
+	}
+
+	// BFS loop
+	for queue.Len() > 0 {
+		front := queue.Front()
+		queue.Remove(front)
+		current := front.Value.(State)
+
+		// If we reached the goal state
+		if current == goal {
+			printSolution(parent, current)
+			return
+		}
+
+		// Generate next possible states
+		for _, move := range moves {
+			var next State
+			if current.Boat == 1 { // Boat on starting side, moving people to the other side
+				next = State{current.Missionaries - move.Missionaries, current.Cannibals - move.Cannibals, 0}
+			} else { // Boat on the other side, bringing people back
+				next = State{current.Missionaries + move.Missionaries, current.Cannibals + move.Cannibals, 1}
+			}
+
+			// Check if the state is valid
+			if !visited[next] && isValid(next, totalM, totalC) {
+				queue.PushBack(next)
+				visited[next] = true
+				parent[next] = current
+			}
+		}
+	}
+
+	fmt.Println("No solution found.")
+}
+
+// printSolution prints the solution path
+func printSolution(parent map[State]State, goal State) {
+	path := []State{}
+	for goal != (State{-1, -1, -1}) {
+		path = append([]State{goal}, path...)
+		goal = parent[goal]
+	}
+
+	fmt.Println("Solution Path:")
+	for _, state := range path {
+		fmt.Printf("Missionaries: %d, Cannibals: %d, Boat: %d\n", state.Missionaries, state.Cannibals, state.Boat)
+	}
+}
+
+// Main function
+func main() {
+	totalM, totalC := 3, 3 // 3 missionaries and 3 cannibals
+	bfsMissionariesAndCannibals(totalM, totalC)
+}
