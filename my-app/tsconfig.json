@@ -125,3 +125,149 @@ func main() {
 	totalM, totalC := 3, 3 // 3 missionaries and 3 cannibals
 	bfsMissionariesAndCannibals(totalM, totalC)
 }
+
+
+
+
+
+
+
+
+
+// 3 missionaries and 3 cannibal
+
+
+package main
+
+import (
+	"container/list"
+	"fmt"
+)
+
+// State represents the amount of water in both jugs
+type State struct {
+	A, B int // A and B are water levels in the jugs
+}
+
+// isValid checks if the given state is valid
+func isValid(x, y, X, Y int) bool {
+	return x >= 0 && x <= X && y >= 0 && y <= Y
+}
+
+// bfsWaterJug solves the Water Jug Problem using BFS
+func bfsWaterJug(X, Y, Z int) {
+	// If Z is greater than both jugs' capacities, solution is impossible
+	if Z > X && Z > Y {
+		fmt.Println("No solution exists.")
+		return
+	}
+
+	// If Z is not a multiple of GCD(X, Y), solution is impossible
+	if Z%gcd(X, Y) != 0 {
+		fmt.Println("No solution exists (GCD rule).")
+		return
+	}
+
+	// BFS setup
+	queue := list.New()
+	visited := make(map[State]bool)
+
+	// Start from (0, 0) state
+	initial := State{0, 0}
+	queue.PushBack(initial)
+	visited[initial] = true
+
+	// Parent map to track path
+	parent := make(map[State]State)
+	parent[initial] = State{-1, -1} // Root state
+
+	// BFS traversal
+	for queue.Len() > 0 {
+		front := queue.Front()
+		queue.Remove(front)
+		current := front.Value.(State)
+
+		x, y := current.A, current.B
+
+		// If the goal state is reached
+		if x == Z || y == Z {
+			printSolution(parent, current)
+			return
+		}
+
+		// Generate all possible valid next states
+		nextStates := []State{
+			{X, y},    // Fill Jug A
+			{x, Y},    // Fill Jug B
+			{0, y},    // Empty Jug A
+			{x, 0},    // Empty Jug B
+			{x - min(x, Y-y), y + min(x, Y-y)}, // Pour A -> B
+			{x + min(y, X-x), y - min(y, X-x)}, // Pour B -> A
+		}
+
+		// Process all next states
+		for _, next := range nextStates {
+			if !visited[next] && isValid(next.A, next.B, X, Y) {
+				queue.PushBack(next)
+				visited[next] = true
+				parent[next] = current
+			}
+		}
+	}
+
+	// If no solution found
+	fmt.Println("No solution exists.")
+}
+
+// gcd calculates the Greatest Common Divisor
+func gcd(a, b int) int {
+	if b == 0 {
+		return a
+	}
+	return gcd(b, a%b)
+}
+
+// min function returns the minimum of two numbers
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
+}
+
+// printSolution prints the sequence of states from initial to goal
+func printSolution(parent map[State]State, goal State) {
+	path := []State{}
+	for goal != (State{-1, -1}) {
+		path = append([]State{goal}, path...)
+		goal = parent[goal]
+	}
+
+	fmt.Println("Solution Path:")
+	for _, state := range path {
+		fmt.Printf("(%d, %d)\n", state.A, state.B)
+	}
+}
+
+// Main function
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
